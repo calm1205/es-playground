@@ -1,0 +1,44 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_volume:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  pre_kibana:
+    depends_on:
+      - elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    container_name: pre_kibana
+    restart: "no"
+    command: >
+      bash -c '
+        echo "Setup the kibana_system password";
+        start_time=$(date +%s);
+        timeout=60;
+        until curl -s -u "elastic:${ELASTIC_PASSWORD}" -X POST http://elasticsearch:9200/_security/user/${KIBANA_USER}/_password -d "{\"password\":\"'${KIBANA_PASSWORD}'\"}" -H "Content-Type: application/json" | grep -q "^{}"; do if [ $(($(date +%s) - $$start_time)) -ge $$timeout ]; then echo "Error: Elasticsearch timeout"; exit 1; fi; sleep 2; done;
+      '
+
+  kibana:
+    depends_on:
+      - pre_kibana
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTIC_URL}
+      - ELASTICSEARCH_USERNAME=${KIBANA_USER}
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+    ports:
+      - "5601:5601"
+
+volumes:
+  es_volume:

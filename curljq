@@ -1,6 +1,0 @@
-#!/bin/bash
-
-CURL_USER=elastic
-CURL_PASS=password
-
-curl -u "$CURL_USER:$CURL_PASS" "$@" | jq .

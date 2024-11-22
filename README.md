@@ -39,6 +39,7 @@ curl -X POST "http://localhost:9200/users_index/_bulk?pretty" -H "Content-Type: 
 # search document
 curl "http://localhost:9200/users_index/_search?q=25&pretty" -u elastic:password | jq .
 
+# search document fuzzy
 curl "http://localhost:9200/users_index/_search?pretty" -u elastic:password -H 'Content-Type: application/json' -d' {
   "query": {
     "match": {
